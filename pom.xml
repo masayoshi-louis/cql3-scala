@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.cql3-scala</groupId>
 	<artifactId>cql3-scala</artifactId>
-	<version>1.0.0</version>
+	<version>0.8.0</version>
 	<properties>
 		<scala.version>2.10.4</scala.version>
 	</properties>
