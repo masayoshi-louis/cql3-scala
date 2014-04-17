@@ -3,7 +3,7 @@ package org.cql3scala
 import java.util.Date
 import java.util.UUID
 import com.datastax.driver.core.Row
-import org.cql3_scala.utils.ByteBufferUtil
+import org.cql3scala.utils.ByteBufferUtil
 import com.datastax.driver.core.querybuilder.QueryBuilder
 import java.nio.ByteBuffer
 import scala.collection.JavaConversions._

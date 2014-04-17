@@ -1,4 +1,4 @@
-package org.cql3_scala.utils;
+package org.cql3scala.utils;
 
 import static com.google.common.base.Charsets.UTF_8;
 
