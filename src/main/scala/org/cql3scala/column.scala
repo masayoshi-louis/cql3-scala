@@ -14,7 +14,9 @@ trait Column[A] {
 
   override def toString = name
 
-  def apply(implicit row: Row) = row %: this
+  def apply()(implicit row: Row) = row %: this
+
+  def apply[B](row: Row)(implicit ev: DataOps[A, B]): B = ev.get(this, row)
 
   def ?=(value: A) = dataType.qbEq(this, value)
   def ?>(value: A) = dataType.qbGt(this, value)
@@ -38,8 +40,10 @@ trait Column[A] {
   def ?<-~*[B](value: B*)(implicit ev: DataOps[A, B]) = ev.qbIn(this, value)
   def ?<-~[B](value: Seq[B])(implicit ev: DataOps[A, B]) = ev.qbIn(this, value)
   def :=~[B](value: B)(implicit ev: DataOps[A, B]) = ev.qbSet(this, value)
+  /* useless
   def %~:[B](row: Row)(implicit ev: DataOps[A, B]): B = ev.get(this, row)
   def %~?:[B](row: Row)(implicit ev: DataOps[A, B]): Option[B] = ev.getOption(this, row)
+  */
   def ~->:[B](value: B)(implicit ev: DataOps[A, B]) = ev.associate(name, value)
 
 }
@@ -53,11 +57,11 @@ trait CounterColumn extends Column[Long] {
   def :+=(value: Long) = QueryBuilder.incr(name, value)
 }
 
-trait SetColumn[E] extends Column[DataTypes.Set[E]] {
+trait SetColumn[E] extends Column[Set[E]] {
   def :+=(value: Any) = QueryBuilder.add(name, value)
-  def :++=(values: DataTypes.Set[E]) = QueryBuilder.addAll(name, values)
+  def :++=(values: Set[E]) = QueryBuilder.addAll(name, values)
   def :-=(value: Any) = QueryBuilder.remove(name, value)
-  def :--=(values: DataTypes.Set[E]) = QueryBuilder.removeAll(name, values)
+  def :--=(values: Set[E]) = QueryBuilder.removeAll(name, values)
 }
 
 trait PrimaryKey[A] extends Column[A]

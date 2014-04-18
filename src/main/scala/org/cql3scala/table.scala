@@ -4,6 +4,22 @@ import scala.collection.mutable
 
 private[cql3scala] trait TableLike {
 
+  lazy val columnMap: scala.collection.Map[String, Column[_]] = _columns
+
+  lazy val columns = {
+    columnMap.values.toIndexedSeq
+  }
+
+  lazy val columnNames = columns.map(_.name)
+
+  lazy val columnIndex = columnMap.keysIterator.zipWithIndex.toMap
+
+  lazy val partitionKeys = _partitionKeys.toIndexedSeq
+
+  lazy val clusteringKeys = _clusteringKeys.toIndexedSeq
+
+  lazy val primaryKeys = partitionKeys ++ clusteringKeys
+
   protected[this] class ColumnImpl[A](val name: String)(implicit val dataType: DataType[A]) extends Column[A] {
     require(name != null && name != "" && name.trim == name && dataType != null)
     val table = TableLike.this
@@ -21,22 +37,6 @@ private[cql3scala] trait TableLike {
   protected[this] val _columns = mutable.LinkedHashMap[String, Column[_]]()
   protected[this] val _partitionKeys = mutable.ArrayBuffer[PartitionKey[_]]()
   protected[this] val _clusteringKeys = mutable.ArrayBuffer[ClusteringKey[_]]()
-
-  lazy val columnMap: scala.collection.Map[String, Column[_]] = _columns
-
-  lazy val columns = {
-    columnMap.values.toIndexedSeq
-  }
-
-  lazy val columnNames = columns.map(_.name)
-
-  lazy val columnIndex = columnMap.keysIterator.zipWithIndex.toMap
-
-  lazy val partitionKeys = _partitionKeys.toIndexedSeq
-
-  lazy val clusteringKeys = _clusteringKeys.toIndexedSeq
-
-  lazy val primaryKeys = partitionKeys ++ clusteringKeys
 
   protected[this] object PARTITION {
     def KEY(pk: PartitionKey[_]*) {
@@ -86,18 +86,18 @@ private[cql3scala] trait TableLike {
     protected[this] val columnName: String
     def column[A](tp: DataType[A]) = buildCol(columnName)(tp)
 
-    def INT = column(DataTypes.INT)
-    def BIGINT = column(DataTypes.BIGINT)
-    def TEXT = column(DataTypes.TEXT)
-    def BOOLEAN = column(DataTypes.BOOLEAN)
-    def BLOB = column(DataTypes.BLOB)
-    def COUNTER = new ColumnImpl(columnName)(DataTypes.COUNTER) with CounterColumn
-    def TIMESTAMP = column(DataTypes.TIMESTAMP)
-    def TIMEUUID = column(DataTypes.TIMEUUID)
-    def FLOAT = column(DataTypes.FLOAT)
-    def DOUBLE = column(DataTypes.DOUBLE)
-    def DECIMAL = column(DataTypes.DECIMAL)
-    def VARINT = column(DataTypes.VARINT)
+    def INT = column(org.cql3scala.INT)
+    def BIGINT = column(org.cql3scala.BIGINT)
+    def TEXT = column(org.cql3scala.TEXT)
+    def BOOLEAN = column(org.cql3scala.BOOLEAN)
+    def BLOB = column(org.cql3scala.BLOB)
+    def COUNTER = new ColumnImpl(columnName)(org.cql3scala.COUNTER) with CounterColumn
+    def TIMESTAMP = column(org.cql3scala.TIMESTAMP)
+    def TIMEUUID = column(org.cql3scala.TIMEUUID)
+    def FLOAT = column(org.cql3scala.FLOAT)
+    def DOUBLE = column(org.cql3scala.DOUBLE)
+    def DECIMAL = column(org.cql3scala.DECIMAL)
+    def VARINT = column(org.cql3scala.VARINT)
 
     def INT[B[_] <: PrimaryKey[_]](toKey: KeyBuilder[B]): B[Int] = toKey(INT)
     def BIGINT[B[_] <: PrimaryKey[_]](toKey: KeyBuilder[B]): B[Long] = toKey(BIGINT)
@@ -110,19 +110,30 @@ private[cql3scala] trait TableLike {
     def DECIMAL[B[_] <: PrimaryKey[_]](toKey: KeyBuilder[B]): B[java.math.BigDecimal] = toKey(DECIMAL)
     def VARINT[B[_] <: PrimaryKey[_]](toKey: KeyBuilder[B]): B[java.math.BigInteger] = toKey(VARINT)
 
-    def SET[A](eType: ElemType[A]) = new ColumnImpl(columnName)(DataTypes.collection(DataTypes.SET, eType)) with SetColumn[A] //column(DataTypes.collection(DataTypes.SET, eType))
-    def SET[A <: AnyVal, B](eType: PrimitiveDataType[A, B]) = new ColumnImpl(columnName)(DataTypes.primitiveCollection(DataTypes.SET, eType)) with SetColumn[A] //column(DataTypes.primitiveCollection(DataTypes.SET, eType))
+    def SET[A](eType: ElemType[A]) =
+      new ColumnImpl(columnName)(org.cql3scala.collection(org.cql3scala.SET, eType)) with SetColumn[A] //column(DataTypes.collection(DataTypes.SET, eType))
+    def SET[A <: AnyVal, B](eType: PrimitiveDataType[A, B]) =
+      new ColumnImpl(columnName)(org.cql3scala.primitiveCollection(org.cql3scala.SET, eType)) with SetColumn[A] //column(DataTypes.primitiveCollection(DataTypes.SET, eType))
     //TODO add specific operation traits for list and map
-    def LIST[A](eType: ElemType[A]) = column(DataTypes.collection(DataTypes.LIST, eType))
-    def LIST[A <: AnyVal, B](eType: PrimitiveDataType[A, B]) = column(DataTypes.primitiveCollection(DataTypes.LIST, eType))
-    def MAP[K, V](kType: ElemType[K], vType: ElemType[V]) = column(DataTypes.map(kType, vType))
+    def LIST[A](eType: ElemType[A]) =
+      column(org.cql3scala.collection(org.cql3scala.LIST, eType))
+    def LIST[A <: AnyVal, B](eType: PrimitiveDataType[A, B]) =
+      column(org.cql3scala.primitiveCollection(org.cql3scala.LIST, eType))
+    def MAP[K, V](kType: ElemType[K], vType: ElemType[V]) = column(org.cql3scala.map(kType, vType))
 
   }
 
-  protected[this] implicit def columnBuilder(name: String): ColumnBuilder =
+  protected[this] implicit def columnBuilder(name: String): ColumnBuilder = {
     new {
       val columnName = name
     } with ColumnBuilder
+  }
+
+  protected[this] def WITH(ops: TableOption*) {
+    options ++= ops
+  }
+
+  protected[this] val options = mutable.ListBuffer[TableOption]()
 
 }
 
@@ -136,11 +147,13 @@ abstract class Table(val name: String, val keyspace: String) extends Equals with
     columnNames.mkString(" (", ",", ")") + Seq.fill(columns.size)("?").mkString(" VALUES (", ",", ");")
 
   def ddl = {
+    assume(!partitionKeys.isEmpty, "Table must contain at least one partition key")
     s"CREATE TABLE $name (" +
       columns.map(_.ddl).mkString("", ", ", ", ") +
       "PRIMARY KEY (" + partitionKeys.map(_.name).mkString("(", ", ", ")") +
       (if (clusteringKeys.isEmpty) "" else clusteringKeys.map(_.name).mkString(", ", ", ", "")) +
-      "));"
+      "))" +
+      (if (options.isEmpty) "" else " WITH " + options.map(_.ddl).mkString(" AND ")) + ";"
   }
 
   override def toString = name
