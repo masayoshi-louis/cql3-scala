@@ -1,20 +1,22 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * table.scala
  * Copyright (c) 2014, masayoshi louis, All rights reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3.0 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package org.cql3scala
 
 import scala.collection.mutable
@@ -41,6 +43,10 @@ private[cql3scala] trait TableLike {
     require(name != null && name != "" && name.trim == name && dataType != null)
     val table = TableLike.this
     _columns += name -> this
+
+    def this(other: Column[A]) {
+      this(other.name)(other.dataType)
+    }
   }
 
   protected[this] trait PartitionKeyImpl[A] extends ColumnImpl[A] with PartitionKey[A] {
@@ -84,23 +90,17 @@ private[cql3scala] trait TableLike {
   }
 
   protected[this] object PK extends KeyBuilder[PartitionKey] {
-    def apply[A](c: Column[A]) = new ColumnImpl[A](c.name)(c.dataType) with PartitionKeyImpl[A]
+    def apply[A](c: Column[A]) = new ColumnImpl(c) with PartitionKeyImpl[A]
   }
 
   protected[this] object CK extends KeyBuilder[ClusteringKey] {
-    def apply[A](c: Column[A]) = new ColumnImpl[A](c.name)(c.dataType) with ClusteringKeyImpl[A]
-  }
-
-  protected[this] implicit def columnToKey[A](c: Column[A]) = new {
-    def PK = TableLike.this.PK(c)
-    def CK = TableLike.this.CK(c)
+    def apply[A](c: Column[A]) = new ColumnImpl(c) with ClusteringKeyImpl[A]
   }
 
   protected[this] implicit def buildCol[A: DataType](name: String): Column[A] = new ColumnImpl[A](name)
 
-  protected[this] trait ColumnBuilder {
+  protected[this] implicit class ColumnBuilder(val columnName: String) {
 
-    protected[this] val columnName: String
     def column[A](tp: DataType[A]) = buildCol(columnName)(tp)
 
     def INT = column(org.cql3scala.INT)
@@ -140,11 +140,8 @@ private[cql3scala] trait TableLike {
 
   }
 
-  protected[this] implicit def columnBuilder(name: String): ColumnBuilder = {
-    new {
-      val columnName = name
-    } with ColumnBuilder
-  }
+  protected[this] def STATIC[A](c: Column[A]): Column[A] with StaticColumn =
+    new ColumnImpl(c) with StaticColumn
 
   protected[this] def WITH(ops: TableOption*) {
     options ++= ops

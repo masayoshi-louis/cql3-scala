@@ -41,7 +41,7 @@ object ClusteringOrder {
 
   def BY(spec: String) = new TableOption {
 
-    def ddl = "CLUSTERING ORDER BY " + s"($spec)"
+    def ddl = s"CLUSTERING ORDER BY ($spec)"
 
   }
 

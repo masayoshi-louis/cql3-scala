@@ -1,20 +1,22 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * column.scala
  * Copyright (c) 2014, masayoshi louis, All rights reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3.0 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package org.cql3scala
 
 import com.datastax.driver.core.Row
@@ -27,7 +29,7 @@ trait Column[A] {
   val dataType: DataType[A]
 
   def index = table.columnIndex(this.name)
-  def ddl = s"$name $dataType"
+  def ddl = s"$name $dataType" + (if (isStatic) " static" else "")
 
   override def toString = name
 
@@ -63,6 +65,8 @@ trait Column[A] {
   */
   def ~->:[B](value: B)(implicit ev: DataOps[A, B]) = ev.associate(name, value)
 
+  def isStatic = this.isInstanceOf[StaticColumn]
+
 }
 
 object Column {
@@ -89,4 +93,8 @@ trait PartitionKey[A] extends PrimaryKey[A] {
 
 trait ClusteringKey[A] extends PrimaryKey[A] {
   assert(!this.isInstanceOf[PartitionKey[_]])
+}
+
+trait StaticColumn {
+  assert(!this.isInstanceOf[PrimaryKey[_]])
 }
