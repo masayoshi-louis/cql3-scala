@@ -1,5 +1,5 @@
 <p>
-This is a simple helper library for Scala based on DataStax Java Driver.<br/>
+This is a simple helper library for Scala 2.10 based on DataStax Java Driver.<br/>
 It is used in UMCAT project in NLP2CT Lab.<br/>
 </p>
 <p>

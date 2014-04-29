@@ -85,6 +85,16 @@ trait SetColumn[E] extends Column[Set[E]] {
   def :--=(values: Set[E]) = QueryBuilder.removeAll(name, values)
 }
 
+trait ListColumn[E] extends Column[List[E]] {
+  def update(i: Int, v: E) = QueryBuilder.setIdx(name, i, v)
+  def :+=(value: Any) = QueryBuilder.append(name, value)
+  def :++=(values: List[E]) = QueryBuilder.appendAll(name, values)
+  def :-=(value: Any) = QueryBuilder.discard(name, value)
+  def :--=(values: List[E]) = QueryBuilder.discardAll(name, values)
+  def +=:(value: Any) = QueryBuilder.prepend(name, value)
+  def ++=:(values: List[E]) = QueryBuilder.prependAll(name, values)
+}
+
 trait PrimaryKey[A] extends Column[A]
 
 trait PartitionKey[A] extends PrimaryKey[A] {

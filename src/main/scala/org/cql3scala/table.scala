@@ -131,11 +131,11 @@ private[cql3scala] trait TableLike {
       new ColumnImpl(columnName)(org.cql3scala.collection(org.cql3scala.SET, eType)) with SetColumn[A] //column(DataTypes.collection(DataTypes.SET, eType))
     def SET[A <: AnyVal, B](eType: PrimitiveDataType[A, B]) =
       new ColumnImpl(columnName)(org.cql3scala.primitiveCollection(org.cql3scala.SET, eType)) with SetColumn[A] //column(DataTypes.primitiveCollection(DataTypes.SET, eType))
-    //TODO add specific operation traits for list and map
     def LIST[A](eType: ElemType[A]) =
-      column(org.cql3scala.collection(org.cql3scala.LIST, eType))
+      new ColumnImpl(columnName)(org.cql3scala.collection(org.cql3scala.LIST, eType)) with ListColumn[A]
     def LIST[A <: AnyVal, B](eType: PrimitiveDataType[A, B]) =
-      column(org.cql3scala.primitiveCollection(org.cql3scala.LIST, eType))
+      new ColumnImpl(columnName)(org.cql3scala.primitiveCollection(org.cql3scala.LIST, eType)) with ListColumn[A]
+    //TODO add specific operation traits for map
     def MAP[K, V](kType: ElemType[K], vType: ElemType[V]) = column(org.cql3scala.map(kType, vType))
 
   }
