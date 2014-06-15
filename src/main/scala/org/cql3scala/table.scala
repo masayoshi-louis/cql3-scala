@@ -21,7 +21,7 @@ package org.cql3scala
 
 import scala.collection.mutable
 
-private[cql3scala] trait TableLike {
+trait TableLike {
 
   lazy val columnMap: scala.collection.Map[String, Column[_]] = _columns
 
