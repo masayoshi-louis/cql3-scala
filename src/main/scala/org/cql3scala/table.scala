@@ -155,14 +155,14 @@ object Table {
   implicit def table2Name(t: Table) = t.name
 }
 
-abstract class Table(val name: String, val keyspace: String) extends Equals with TableLike {
+abstract class Table(val name: String) extends Equals with TableLike {
 
   lazy val queryStringForPreparedInsert = "INSERT INTO " + name +
     columnNames.mkString(" (", ",", ")") + Seq.fill(columns.size)("?").mkString(" VALUES (", ",", ");")
 
-  def ddl = {
+  def ddl(ifNotExists: Boolean = false): String = {
     assume(!partitionKeys.isEmpty, "Table must contain at least one partition key")
-    s"CREATE TABLE $name (" +
+    s"CREATE TABLE " + (if (ifNotExists) "IF NOT EXISTS " else "") + "$name (" +
       columns.map(_.ddl).mkString("", ", ", ", ") +
       "PRIMARY KEY (" + partitionKeys.map(_.name).mkString("(", ", ", ")") +
       (if (clusteringKeys.isEmpty) "" else clusteringKeys.map(_.name).mkString(", ", ", ", "")) +
@@ -170,22 +170,24 @@ abstract class Table(val name: String, val keyspace: String) extends Equals with
       (if (options.isEmpty) "" else " WITH " + options.map(_.ddl).mkString(" AND ")) + ";"
   }
 
+  def ddl: String = ddl(false)
+
   override def toString = name
 
   def canEqual(other: Any) = {
-    other.isInstanceOf[Table]
+    other.isInstanceOf[org.cql3scala.Table]
   }
 
   override def equals(other: Any) = {
     other match {
-      case that: Table => that.canEqual(Table.this) && keyspace == that.keyspace && name == that.name
+      case that: org.cql3scala.Table => that.canEqual(Table.this) && name == that.name
       case _ => false
     }
   }
 
   override def hashCode() = {
     val prime = 41
-    prime * (prime + keyspace.hashCode) + name.hashCode
+    prime + name.hashCode
   }
 
 }
