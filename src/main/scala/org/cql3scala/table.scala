@@ -162,7 +162,7 @@ abstract class Table(val name: String) extends Equals with TableLike {
 
   def ddl(ifNotExists: Boolean = false): String = {
     assume(!partitionKeys.isEmpty, "Table must contain at least one partition key")
-    s"CREATE TABLE " + (if (ifNotExists) "IF NOT EXISTS " else "") + "$name (" +
+    s"CREATE TABLE " + (if (ifNotExists) "IF NOT EXISTS " else "") + s"$name (" +
       columns.map(_.ddl).mkString("", ", ", ", ") +
       "PRIMARY KEY (" + partitionKeys.map(_.name).mkString("(", ", ", ")") +
       (if (clusteringKeys.isEmpty) "" else clusteringKeys.map(_.name).mkString(", ", ", ", "")) +
