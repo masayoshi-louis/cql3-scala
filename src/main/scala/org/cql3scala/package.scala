@@ -1,20 +1,22 @@
-/*******************************************************************************
+/**
+ * *****************************************************************************
  * package.scala
  * Copyright (c) 2014, masayoshi louis, All rights reserved.
- * 
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 3.0 of the License, or (at your option) any later version.
- * 
+ *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  * Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library.
- ******************************************************************************/
+ * ****************************************************************************
+ */
 package org
 
 import java.math.BigDecimal
@@ -91,7 +93,7 @@ package object cql3scala {
     }
   }
 
-  implicit object TEXT extends DataType[String]("text") {
+  implicit object TEXT extends DataType[String]("text") with ElemType[String] {
     val cls = classOf[String]
     def get(col: Column[String], row: Row) = row.getString(col.name)
     def bind(col: Column[String], b: BoundStatement, value: String) {
@@ -108,7 +110,7 @@ package object cql3scala {
     }
   }
 
-  implicit object BLOB extends DataType[Array[Byte]]("blob") {
+  implicit object BLOB extends DataType[Array[Byte]]("blob") with ElemType[Array[Byte]] {
     val cls = classOf[Array[Byte]]
     def get(col: Column[Array[Byte]], row: Row) =
       ByteBufferUtil.getArray(row.getBytesUnsafe(col.name))
@@ -136,7 +138,7 @@ package object cql3scala {
     }
   }
 
-  implicit object TIMESTAMP extends DataType[Date]("timestamp") {
+  implicit object TIMESTAMP extends DataType[Date]("timestamp") with ElemType[Date] {
     val cls = classOf[Date]
     def get(col: Column[Date], row: Row) = row.getDate(col.name)
     def bind(col: Column[Date], b: BoundStatement, value: Date) {
@@ -144,7 +146,7 @@ package object cql3scala {
     }
   }
 
-  implicit object TIMEUUID extends DataType[UUID]("timeuuid") {
+  implicit object TIMEUUID extends DataType[UUID]("timeuuid") with ElemType[UUID] {
     val cls = classOf[UUID]
     def get(col: Column[UUID], row: Row) = row.getUUID(col.name)
     def bind(col: Column[UUID], b: BoundStatement, value: UUID) {
@@ -170,7 +172,7 @@ package object cql3scala {
     }
   }
 
-  implicit object DECIMAL extends DataType[java.math.BigDecimal]("decimal") {
+  implicit object DECIMAL extends DataType[java.math.BigDecimal]("decimal") with ElemType[java.math.BigDecimal] {
     val cls = classOf[java.math.BigDecimal]
     def get(col: Column[java.math.BigDecimal], row: Row) = row.getDecimal(col.name)
     def bind(col: Column[java.math.BigDecimal], b: BoundStatement, value: java.math.BigDecimal) {
@@ -178,7 +180,7 @@ package object cql3scala {
     }
   }
 
-  implicit object VARINT extends DataType[java.math.BigInteger]("varint") {
+  implicit object VARINT extends DataType[java.math.BigInteger]("varint") with ElemType[java.math.BigInteger] {
     val cls = classOf[java.math.BigInteger]
     def get(col: Column[java.math.BigInteger], row: Row) = row.getVarint(col.name)
     def bind(col: Column[java.math.BigInteger], b: BoundStatement, value: java.math.BigInteger) {
