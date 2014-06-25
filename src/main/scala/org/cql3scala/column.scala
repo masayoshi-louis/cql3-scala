@@ -21,6 +21,7 @@ package org.cql3scala
 
 import com.datastax.driver.core.Row
 import com.datastax.driver.core.querybuilder.QueryBuilder
+import com.datastax.driver.core.querybuilder.BindMarker
 
 trait Column[A] {
 
@@ -38,13 +39,20 @@ trait Column[A] {
   def apply[B](row: Row)(implicit ev: DataOps[A, B]): B = ev.get(this, row)
 
   def ?=(value: A) = dataType.qbEq(this, value)
+  def ?=(bm: BindMarker) = dataType.qbEq(this, bm)
   def ?>(value: A) = dataType.qbGt(this, value)
+  def ?>(bm: BindMarker) = dataType.qbGt(this, bm)
   def ?>=(value: A) = dataType.qbGte(this, value)
+  def ?>=(bm: BindMarker) = dataType.qbGte(this, bm)
   def ?<(value: A) = dataType.qbLt(this, value)
+  def ?<(bm: BindMarker) = dataType.qbLt(this, bm)
   def ?<=(value: A) = dataType.qbLte(this, value)
+  def ?<=(bm: BindMarker) = dataType.qbLte(this, bm)
   def ?<-*(value: A*) = dataType.qbIn(this, value)
   def ?<-(value: Seq[A]) = dataType.qbIn(this, value)
+  def ?<-(bm: BindMarker) = dataType.qbIn(this, bm)
   def :=(value: A) = dataType.qbSet(this, value)
+  def :=(bm: BindMarker) = dataType.qbSet(this, bm)
 
   def %:(row: Row): A = dataType.get(this, row)
   def %?:(row: Row): Option[A] = dataType.getOption(this, row)
@@ -76,23 +84,35 @@ object Column {
 trait CounterColumn extends Column[Long] {
   def :++ = QueryBuilder.incr(name)
   def :+=(value: Long) = QueryBuilder.incr(name, value)
+  def :+=(bm: BindMarker) = QueryBuilder.incr(name, bm)
 }
 
 trait SetColumn[E] extends Column[Set[E]] {
-  def :+=(value: Any) = QueryBuilder.add(name, value)
+  def :+=(value: E) = QueryBuilder.add(name, value)
+  def :+=(bm: BindMarker) = QueryBuilder.add(name, bm)
   def :++=(values: Set[E]) = QueryBuilder.addAll(name, values)
-  def :-=(value: Any) = QueryBuilder.remove(name, value)
+  def :++=(bm: BindMarker) = QueryBuilder.addAll(name, bm)
+  def :-=(value: E) = QueryBuilder.remove(name, value)
+  def :-=(bm: BindMarker) = QueryBuilder.remove(name, bm)
   def :--=(values: Set[E]) = QueryBuilder.removeAll(name, values)
+  def :--=(bm: BindMarker) = QueryBuilder.removeAll(name, bm)
 }
 
 trait ListColumn[E] extends Column[List[E]] {
   def update(i: Int, v: E) = QueryBuilder.setIdx(name, i, v)
-  def :+=(value: Any) = QueryBuilder.append(name, value)
+  def update(i: Int, bm: BindMarker) = QueryBuilder.setIdx(name, i, bm)
+  def :+=(value: E) = QueryBuilder.append(name, value)
+  def :+=(bm: BindMarker) = QueryBuilder.append(name, bm)
   def :++=(values: List[E]) = QueryBuilder.appendAll(name, values)
-  def :-=(value: Any) = QueryBuilder.discard(name, value)
+  def :++=(bm: BindMarker) = QueryBuilder.appendAll(name, bm)
+  def :-=(value: E) = QueryBuilder.discard(name, value)
+  def :-=(bm: BindMarker) = QueryBuilder.discard(name, bm)
   def :--=(values: List[E]) = QueryBuilder.discardAll(name, values)
-  def +=:(value: Any) = QueryBuilder.prepend(name, value)
+  def :--=(bm: BindMarker) = QueryBuilder.discardAll(name, bm)
+  def +=:(value: E) = QueryBuilder.prepend(name, value)
+  def +=:(bm: BindMarker) = QueryBuilder.prepend(name, bm)
   def ++=:(values: List[E]) = QueryBuilder.prependAll(name, values)
+  def ++=:(bm: BindMarker) = QueryBuilder.prependAll(name, bm)
 }
 
 trait PrimaryKey[A] extends Column[A]

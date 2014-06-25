@@ -53,8 +53,11 @@ package object cql3scala {
     def get[E](col: Column[Set[E]], row: Row)(implicit ev: DataType[E]) = row.getSet(col.name, ev.cls)
     def getPrimitive[E <: AnyVal, B](col: Column[Set[E]], row: Row)(implicit ev: PrimitiveDataType[E, B]): Set[E] =
       row.getSet(col.name, ev.boxCls).asInstanceOf[java.util.Set[E]]
-    def bind[E](col: Column[Set[E]], b: BoundStatement, value: Set[E]) {
-      b.setSet(col.name, value)
+    def bind[E](b: BoundStatement, i: Int, value: Set[E]) {
+      b.setSet(i, value)
+    }
+    def bind[E](b: BoundStatement, name: String, value: Set[E]) {
+      b.setSet(name, value)
     }
   }
 
@@ -63,8 +66,11 @@ package object cql3scala {
     def get[E](col: Column[List[E]], row: Row)(implicit ev: DataType[E]) = row.getList(col.name, ev.cls)
     def getPrimitive[E <: AnyVal, B](col: Column[List[E]], row: Row)(implicit ev: PrimitiveDataType[E, B]): List[E] =
       row.getList(col.name, ev.boxCls).asInstanceOf[java.util.List[E]]
-    def bind[E](col: Column[List[E]], b: BoundStatement, value: List[E]) {
-      b.setList(col.name, value)
+    def bind[E](b: BoundStatement, i: Int, value: List[E]) {
+      b.setList(i, value)
+    }
+    def bind[E](b: BoundStatement, name: String, value: List[E]) {
+      b.setList(name, value)
     }
   }
 
@@ -79,8 +85,11 @@ package object cql3scala {
     val cls = classOf[Int]
     val boxCls = classOf[java.lang.Integer]
     def get(col: Column[Int], row: Row) = row.getInt(col.name)
-    def bind(col: Column[Int], b: BoundStatement, value: Int) {
-      b.setInt(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: Int) {
+      b.setInt(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: Int) {
+      b.setInt(name, value)
     }
   }
 
@@ -88,16 +97,22 @@ package object cql3scala {
     val cls = classOf[Long]
     val boxCls = classOf[java.lang.Long]
     def get(col: Column[Long], row: Row) = row.getLong(col.name)
-    def bind(col: Column[Long], b: BoundStatement, value: Long) {
-      b.setLong(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: Long) {
+      b.setLong(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: Long) {
+      b.setLong(name, value)
     }
   }
 
   implicit object TEXT extends DataType[String]("text") with ElemType[String] {
     val cls = classOf[String]
     def get(col: Column[String], row: Row) = row.getString(col.name)
-    def bind(col: Column[String], b: BoundStatement, value: String) {
-      b.setString(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: String) {
+      b.setString(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: String) {
+      b.setString(name, value)
     }
   }
 
@@ -105,8 +120,11 @@ package object cql3scala {
     val cls = classOf[Boolean]
     val boxCls = classOf[java.lang.Boolean]
     def get(col: Column[Boolean], row: Row) = row.getBool(col.name)
-    def bind(col: Column[Boolean], b: BoundStatement, value: Boolean) {
-      b.setBool(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: Boolean) {
+      b.setBool(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: Boolean) {
+      b.setBool(name, value)
     }
   }
 
@@ -124,8 +142,11 @@ package object cql3scala {
     override def qbIn(col: Column[Array[Byte]], value: Seq[Array[Byte]]) =
       QueryBuilder.in(col.name, value.map(arr => c(arr): Object): _*)
     override def qbSet(col: Column[Array[Byte]], value: Array[Byte]) = QueryBuilder.set(col.name, c(value))
-    def bind(col: Column[Array[Byte]], b: BoundStatement, value: Array[Byte]) {
-      b.setBytesUnsafe(col.name, c(value))
+    def bind(b: BoundStatement, i: Int, value: Array[Byte]) {
+      b.setBytesUnsafe(i, c(value))
+    }
+    def bind(b: BoundStatement, name: String, value: Array[Byte]) {
+      b.setBytesUnsafe(name, c(value))
     }
     override def associate(name: String, value: Array[Byte]) = (name, c(value))
     private def c(value: Array[Byte]) = ByteBuffer.wrap(value)
@@ -133,24 +154,33 @@ package object cql3scala {
 
   implicit object BlobAsByteBuffer extends DataOps[Array[Byte], ByteBuffer] {
     def get(col: Column[Array[Byte]], row: Row) = row.getBytesUnsafe(col.name)
-    def bind(col: Column[Array[Byte]], b: BoundStatement, value: ByteBuffer) {
-      b.setBytesUnsafe(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: ByteBuffer) {
+      b.setBytesUnsafe(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: ByteBuffer) {
+      b.setBytesUnsafe(name, value)
     }
   }
 
   implicit object TIMESTAMP extends DataType[Date]("timestamp") with ElemType[Date] {
     val cls = classOf[Date]
     def get(col: Column[Date], row: Row) = row.getDate(col.name)
-    def bind(col: Column[Date], b: BoundStatement, value: Date) {
-      b.setDate(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: Date) {
+      b.setDate(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: Date) {
+      b.setDate(name, value)
     }
   }
 
   implicit object TIMEUUID extends DataType[UUID]("timeuuid") with ElemType[UUID] {
     val cls = classOf[UUID]
     def get(col: Column[UUID], row: Row) = row.getUUID(col.name)
-    def bind(col: Column[UUID], b: BoundStatement, value: UUID) {
-      b.setUUID(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: UUID) {
+      b.setUUID(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: UUID) {
+      b.setUUID(name, value)
     }
   }
 
@@ -158,8 +188,11 @@ package object cql3scala {
     val cls = classOf[Float]
     val boxCls = classOf[java.lang.Float]
     def get(col: Column[Float], row: Row) = row.getFloat(col.name)
-    def bind(col: Column[Float], b: BoundStatement, value: Float) {
-      b.setFloat(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: Float) {
+      b.setFloat(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: Float) {
+      b.setFloat(name, value)
     }
   }
 
@@ -167,24 +200,33 @@ package object cql3scala {
     val cls = classOf[Double]
     val boxCls = classOf[java.lang.Double]
     def get(col: Column[Double], row: Row) = row.getDouble(col.name)
-    def bind(col: Column[Double], b: BoundStatement, value: Double) {
-      b.setDouble(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: Double) {
+      b.setDouble(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: Double) {
+      b.setDouble(name, value)
     }
   }
 
   implicit object DECIMAL extends DataType[java.math.BigDecimal]("decimal") with ElemType[java.math.BigDecimal] {
     val cls = classOf[java.math.BigDecimal]
     def get(col: Column[java.math.BigDecimal], row: Row) = row.getDecimal(col.name)
-    def bind(col: Column[java.math.BigDecimal], b: BoundStatement, value: java.math.BigDecimal) {
-      b.setDecimal(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: java.math.BigDecimal) {
+      b.setDecimal(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: java.math.BigDecimal) {
+      b.setDecimal(name, value)
     }
   }
 
   implicit object VARINT extends DataType[java.math.BigInteger]("varint") with ElemType[java.math.BigInteger] {
     val cls = classOf[java.math.BigInteger]
     def get(col: Column[java.math.BigInteger], row: Row) = row.getVarint(col.name)
-    def bind(col: Column[java.math.BigInteger], b: BoundStatement, value: java.math.BigInteger) {
-      b.setVarint(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: java.math.BigInteger) {
+      b.setVarint(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: java.math.BigInteger) {
+      b.setVarint(name, value)
     }
   }
 
@@ -192,8 +234,11 @@ package object cql3scala {
     val cls = classOf[Long]
     val boxCls = classOf[java.lang.Long]
     def get(col: Column[Long], row: Row) = row.getLong(col.name)
-    def bind(col: Column[Long], b: BoundStatement, value: Long) {
-      b.setLong(col.name, value)
+    def bind(b: BoundStatement, i: Int, value: Long) {
+      b.setLong(i, value)
+    }
+    def bind(b: BoundStatement, name: String, value: Long) {
+      b.setLong(name, value)
     }
   }
 
