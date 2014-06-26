@@ -38,16 +38,6 @@ class BoundStatementBuilder(bs: BoundStatement) {
     this
   }
 
-  def setElem[E, C[_]](col: Column[C[E]], i: Int, value: E) = {
-    col.dataType.asInstanceOf[CollectionDataType[E, C]].bindElem(bs, i, value)
-    this
-  }
-
-  def setElem[E, C[_]](col: Column[C[E]], name: String, value: E) = {
-    col.dataType.asInstanceOf[CollectionDataType[E, C]].bindElem(bs, name, value)
-    this
-  }
-
 }
 
 object BoundStatementBuilder {

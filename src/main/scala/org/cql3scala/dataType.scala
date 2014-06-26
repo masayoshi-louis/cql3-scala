@@ -88,8 +88,6 @@ class CollectionDataType[E, C[_]](implicit val containerType: ContainerType[C], 
   def get(col: Column[C[E]], row: Row) = containerType.get(col, row)
   def bind(b: BoundStatement, i: Int, value: C[E]) { containerType.bind(b, i, value) }
   def bind(b: BoundStatement, name: String, value: C[E]) { containerType.bind(b, name, value) }
-  def bindElem(b: BoundStatement, i: Int, value: E) { elemType.bind(b, i, value) }
-  def bindElem(b: BoundStatement, name: String, value: E) { elemType.bind(b, name, value) }
 }
 
 class PrimitiveCollectionDataType[E <: AnyVal, B, C[_]](implicit containerType: ContainerType[C], elemType: PrimitiveDataType[E, B])
