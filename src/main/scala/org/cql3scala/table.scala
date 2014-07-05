@@ -147,7 +147,13 @@ trait TableLike {
     options ++= ops
   }
 
+  protected[this] def INDEX(name: String, col: Column[_]) {
+    secondIndexes += ((name, col))
+  }
+
   protected[this] val options = mutable.ListBuffer[TableOption]()
+
+  protected[this] val secondIndexes = mutable.ArrayBuffer[(String, Column[_])]()
 
 }
 
@@ -162,12 +168,20 @@ abstract class Table(val name: String) extends Equals with TableLike {
 
   def ddl(ifNotExists: Boolean = false): String = {
     assume(!partitionKeys.isEmpty, "Table must contain at least one partition key")
+    val createIndexStat = if (secondIndexes.isEmpty) "" else {
+      val list = secondIndexes map {
+        case (n, c) =>
+          s"CREATE INDEX $n ON ${this.name} (${c.name})"
+      }
+      list.mkString(" ", ";", ";")
+    }
     s"CREATE TABLE " + (if (ifNotExists) "IF NOT EXISTS " else "") + s"$name (" +
       columns.map(_.ddl).mkString("", ", ", ", ") +
       "PRIMARY KEY (" + partitionKeys.map(_.name).mkString("(", ", ", ")") +
       (if (clusteringKeys.isEmpty) "" else clusteringKeys.map(_.name).mkString(", ", ", ", "")) +
       "))" +
-      (if (options.isEmpty) "" else " WITH " + options.map(_.ddl).mkString(" AND ")) + ";"
+      (if (options.isEmpty) "" else " WITH " + options.map(_.ddl).mkString(" AND ")) + ";" +
+      createIndexStat
   }
 
   def ddl: String = ddl(false)
