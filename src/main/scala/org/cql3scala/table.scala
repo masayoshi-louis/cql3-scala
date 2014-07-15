@@ -38,6 +38,8 @@ trait TableLike {
   lazy val clusteringKeys = _clusteringKeys.toIndexedSeq
 
   lazy val primaryKeys = partitionKeys ++ clusteringKeys
+  
+  lazy val secondaryIndexes = this._secondaryIndexes
 
   protected[this] class ColumnImpl[A](val name: String)(implicit val dataType: DataType[A]) extends Column[A] {
     require(name != null && name != "" && name.trim == name && dataType != null)
@@ -148,12 +150,14 @@ trait TableLike {
   }
 
   protected[this] def INDEX(name: String, col: Column[_]) {
-    secondIndexes += ((name, col))
+    _secondaryIndexes += ((name, col))
   }
 
   protected[this] val options = mutable.ListBuffer[TableOption]()
 
-  protected[this] val secondIndexes = mutable.ArrayBuffer[(String, Column[_])]()
+  protected[this] val _secondaryIndexes = mutable.ArrayBuffer[SecondaryIndexDef]()
+
+  type SecondaryIndexDef = (String, Column[_])
 
 }
 
@@ -166,22 +170,19 @@ abstract class Table(val name: String) extends Equals with TableLike {
   lazy val queryStringForPreparedInsert = "INSERT INTO " + name +
     columnNames.mkString(" (", ",", ")") + Seq.fill(columns.size)("?").mkString(" VALUES (", ",", ");")
 
+  def secondaryIndexDDL(i: SecondaryIndexDef, ifNotExists: Boolean = false) = i match {
+    case (n, c) =>
+      s"CREATE INDEX " + (if (ifNotExists) "IF NOT EXISTS " else "") + s"$n ON ${this.name} (${c.name})"
+  }
+
   def ddl(ifNotExists: Boolean = false): String = {
     assume(!partitionKeys.isEmpty, "Table must contain at least one partition key")
-    val createIndexStat = if (secondIndexes.isEmpty) "" else {
-      val list = secondIndexes map {
-        case (n, c) =>
-          s"CREATE INDEX $n ON ${this.name} (${c.name})"
-      }
-      list.mkString(" ", ";", ";")
-    }
     s"CREATE TABLE " + (if (ifNotExists) "IF NOT EXISTS " else "") + s"$name (" +
       columns.map(_.ddl).mkString("", ", ", ", ") +
       "PRIMARY KEY (" + partitionKeys.map(_.name).mkString("(", ", ", ")") +
       (if (clusteringKeys.isEmpty) "" else clusteringKeys.map(_.name).mkString(", ", ", ", "")) +
       "))" +
-      (if (options.isEmpty) "" else " WITH " + options.map(_.ddl).mkString(" AND ")) + ";" +
-      createIndexStat
+      (if (options.isEmpty) "" else " WITH " + options.map(_.ddl).mkString(" AND ")) + ";"
   }
 
   def ddl: String = ddl(false)
