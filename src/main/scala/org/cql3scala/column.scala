@@ -75,6 +75,10 @@ trait Column[A] {
 
   def isStatic = this.isInstanceOf[StaticColumn]
 
+  def DESC = name + " DESC"
+
+  def ASC = name + " ASC"
+
 }
 
 object Column {
